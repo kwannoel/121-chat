@@ -1,14 +1,14 @@
 use std::env;
 use std::io::{self, Read};
 
-enum Mode {
+pub enum Mode {
     Server,
     Client,
 }
 
 impl Mode
 {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let mode_key = "MODE";
         let mode = match env::var_os(mode_key) {
             Some(val) => if val == "server" {

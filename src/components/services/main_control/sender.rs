@@ -1,3 +1,6 @@
+use std::sync::{Arc, Mutex};
+use uuid::Uuid;
+use std::net::TcpStream;
 
 pub fn start(stream_handle: Arc<Mutex<TcpStream>>) -> SenderSrv {
 
@@ -42,19 +45,19 @@ pub fn start(stream_handle: Arc<Mutex<TcpStream>>) -> SenderSrv {
 }
 
 pub struct SenderSrv {
-    stream_handle: Arc<Mutex<&mut Stream>>
+    stream_handle: Arc<Mutex<TcpStream>>
 }
 
 impl SenderSrv {
-    pub fn new(stream_handle: Arc<Mutex<&mut Stream>>) {
+    pub fn new(stream_handle: Arc<Mutex<TcpStream>>) -> Self {
         Self { stream_handle }
     }
 
-    pub fn dispatch(event: SenderEvent) {
+    pub fn dispatch(&self, event: SenderEvent) {
         match event {
-            Ack(uuid) => {},
-            Msg(msg) => {},
-            Acked(Uuid) => {},
+            SenderEvent::Ack(uuid) => {},
+            SenderEvent::Msg(msg) => {},
+            SenderEvent::Acked(Uuid) => {},
         }
     }
 }

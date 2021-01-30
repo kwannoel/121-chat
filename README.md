@@ -29,3 +29,9 @@ APP_MODE=server PORT=<port> cargo run
 ``` sh
 APP_MODE=client IP_ADDR=<ip_addr> cargo run
 ```
+
+# Notes
+
+Client and Server can share the same chat protocol, and utilize their own connection protocols, since their in-chat behaviour is the same.
+
+# Architecture

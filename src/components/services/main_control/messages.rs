@@ -21,6 +21,6 @@ impl Message {
         // Next 16 octets are for uuid
 
         // Everything else is message
-        return Ack(Uuid::new_v4());
+        return Message::Ack(Uuid::new_v4());
     }
 }
