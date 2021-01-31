@@ -30,8 +30,12 @@ pub fn start_chat_service(stream_handle: Arc<Mutex<TcpStream>>) -> std::io::Resu
     let receiver_child = thread::spawn(move || {
         receiver::start(event_sender_2, stream_handle_2);
     });
-    let input_srv = input::start(event_sender.clone());
-    println!("Start message receiving service");
+    println!("Started message receiving service");
+
+    let event_sender_3 = event_sender.clone();
+    let input_child = thread::spawn(move || {
+        input::start(event_sender_3);
+    });
 
     /* EVENT LOOP */
     println!("Event loop started");
@@ -40,6 +44,8 @@ pub fn start_chat_service(stream_handle: Arc<Mutex<TcpStream>>) -> std::io::Resu
     println!("Event loop ended");
 
     sender_child.join();
+    receiver_child.join();
+    input_child.join();
     return Ok(());
 }
 
@@ -54,7 +60,7 @@ fn start_event_loop(event_receiver: Receiver<Event>, sender_srv_dispatch: Sender
                 },
 
                 Event::SendMsg(msg) => {
-                    println!("Sending message");
+                    println!("Sending message {:?}", msg);
                     sender_srv_dispatch.send(sender::SenderEvent::Msg(msg.to_vec()));
                 },
 
@@ -69,7 +75,7 @@ fn start_event_loop(event_receiver: Receiver<Event>, sender_srv_dispatch: Sender
     }
 }
 
-
+#[derive(Clone, Debug)]
 pub enum Event
 {
     RecvMsg(Uuid, Vec<u8>),
