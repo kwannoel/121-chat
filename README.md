@@ -22,12 +22,12 @@ Requirements:
 
 - Start server
 ``` sh
-APP_MODE=server PORT=<port> cargo run
+MODE=server PORT=<port> cargo run
 ```
 
 - Start client
 ``` sh
-APP_MODE=client IP_ADDR=<ip_addr> cargo run
+MODE=client IP_ADDR=<ip_addr> cargo run
 ```
 
 # Notes

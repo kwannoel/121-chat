@@ -1,7 +1,8 @@
 use std::io::prelude::*;
 use std::net::TcpStream;
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{Receiver, channel};
+use std::sync::mpsc::{Receiver, Sender, channel};
+use std::thread;
 use uuid::Uuid;
 
 pub mod sender;
@@ -16,33 +17,50 @@ pub fn start_chat_service(stream_handle: Arc<Mutex<TcpStream>>) -> std::io::Resu
     /* INIT */
     let (event_sender, event_receiver) = channel();
 
-    let sender_srv = sender::start(stream_handle.clone());
+    let (sender_srv_dispatch, sender_event_receiver) = channel();
+
+    let stream_handle_1 = Arc::clone(&stream_handle);
+    let sender_child = thread::spawn(move || {
+        sender::start(stream_handle_1, sender_event_receiver);
+    });
+    println!("Started message sending service");
+
     let receiver_srv = receiver::start(event_sender.clone(), stream_handle.clone());
     let input_srv = input::start(event_sender.clone());
+    println!("Start message receiving service");
 
     /* EVENT LOOP */
-    start_event_loop(event_receiver, sender_srv);
+    println!("Event loop started");
+    start_event_loop(event_receiver, sender_srv_dispatch);
 
+    println!("Event loop ended");
+
+    sender_child.join();
     return Ok(());
 }
 
 
-fn start_event_loop(event_receiver: Receiver<Event>, mut sender_srv: sender::SenderSrv) {
+fn start_event_loop(event_receiver: Receiver<Event>, sender_srv_dispatch: Sender<sender::SenderEvent>) {
     loop {
         match event_receiver.recv() {
             Ok(event) => match event {
                 Event::RecvMsg(uuid, msg) => {
                     println!("received message: {:?}", msg);
-                    return sender_srv.dispatch(sender::SenderEvent::Ack(uuid.clone()));
+                    sender_srv_dispatch.send(sender::SenderEvent::Ack(uuid.clone()));
                 },
 
-                Event::SendMsg(msg) =>
-                    sender_srv.dispatch(sender::SenderEvent::Msg(msg.to_vec())),
+                Event::SendMsg(msg) => {
+                    println!("Sending message");
+                    sender_srv_dispatch.send(sender::SenderEvent::Msg(msg.to_vec()));
+                },
 
-                Event::AckMsg(uuid) =>
-                    sender_srv.dispatch(sender::SenderEvent::Acked(uuid.clone())),
+                Event::AckMsg(uuid) => {
+                    sender_srv_dispatch.send(sender::SenderEvent::Acked(uuid.clone()));
+                },
             }
-            _ => { continue; }
+            Err(e) => {
+                println!("{:?}", e);
+            }
         }
     }
 }
