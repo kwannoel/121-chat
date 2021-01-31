@@ -25,7 +25,11 @@ pub fn start_chat_service(stream_handle: Arc<Mutex<TcpStream>>) -> std::io::Resu
     });
     println!("Started message sending service");
 
-    let receiver_srv = receiver::start(event_sender.clone(), stream_handle.clone());
+    let stream_handle_2 = Arc::clone(&stream_handle);
+    let event_sender_2 = event_sender.clone();
+    let receiver_child = thread::spawn(move || {
+        receiver::start(event_sender_2, stream_handle_2);
+    });
     let input_srv = input::start(event_sender.clone());
     println!("Start message receiving service");
 
