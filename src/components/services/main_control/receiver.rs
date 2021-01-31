@@ -18,11 +18,10 @@ pub fn start(event_sender: Sender<Event>, stream: Arc<Mutex<TcpStream>>) {
                 if n > 0 {
                     match Message::deserialize(msg) {
                         Message::Ack(uuid) => {
-                            println!("time"); // TODO
+                            event_sender.send(Event::AckMsg(uuid));
                         },
                         Message::Msg(uuid, msg_contents) => {
-                            println!("message received");
-                            // Send ack
+                            event_sender.send(Event::RecvMsg(uuid, msg_contents));
                         }
                     }
                 }
