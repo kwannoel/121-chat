@@ -2,11 +2,9 @@ use std::thread;
 use std::net::TcpStream;
 use std::sync::{Arc, Mutex};
 use std::io::Read;
-
 use std::sync::mpsc::Sender;
 
 use super::messages::Message;
-
 use crate::services::main_control::Event;
 
 pub fn start(event_sender: Sender<Event>, stream: Arc<Mutex<TcpStream>>) {
@@ -22,7 +20,7 @@ pub fn start(event_sender: Sender<Event>, stream: Arc<Mutex<TcpStream>>) {
                         Message::Ack(uuid) => {
                             println!("time"); // TODO
                         },
-                        Message::Msg(uuid, msg) => {
+                        Message::Msg(uuid, msg_contents) => {
                             println!("message received");
                             // Send ack
                         }

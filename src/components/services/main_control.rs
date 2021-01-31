@@ -26,18 +26,25 @@ pub fn start_chat_service(stream_handle: Arc<Mutex<TcpStream>>) -> std::io::Resu
     return Ok(());
 }
 
+
 fn start_event_loop(event_receiver: Receiver<Event>, sender_srv: sender::SenderSrv) {
     loop {
         match event_receiver.recv() {
             Ok(event) => match event {
-                Event::RecvMsg(uuid, msg) => sender_srv.dispatch(sender::SenderEvent::Ack(uuid.clone())), // Send msg to stdout
-                Event::SendMsg(msg) => sender_srv.dispatch(sender::SenderEvent::Msg(msg.to_vec())),
-                Event::AckMsg(uuid) => sender_srv.dispatch(sender::SenderEvent::Acked(uuid.clone())),
+                Event::RecvMsg(uuid, msg) =>
+                    sender_srv.dispatch(sender::SenderEvent::Ack(uuid.clone())), // Send msg to stdout
+
+                Event::SendMsg(msg) =>
+                    sender_srv.dispatch(sender::SenderEvent::Msg(msg.to_vec())),
+
+                Event::AckMsg(uuid) =>
+                    sender_srv.dispatch(sender::SenderEvent::Acked(uuid.clone())),
             }
             _ => { continue; }
         }
     }
 }
+
 
 pub enum Event
 {
