@@ -1,6 +1,10 @@
+use std::collections::HashSet;
+use std::net::TcpStream;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
-use std::net::TcpStream;
+use std::io::Write;
+
+use super::messages::Message;
 
 pub fn start(stream_handle: Arc<Mutex<TcpStream>>) -> SenderSrv {
 
@@ -45,19 +49,39 @@ pub fn start(stream_handle: Arc<Mutex<TcpStream>>) -> SenderSrv {
 }
 
 pub struct SenderSrv {
-    stream_handle: Arc<Mutex<TcpStream>>
+    stream_handle: Arc<Mutex<TcpStream>>,
+    pending_queue: HashSet<Uuid>,
 }
 
 impl SenderSrv {
     pub fn new(stream_handle: Arc<Mutex<TcpStream>>) -> Self {
-        Self { stream_handle }
+        Self { stream_handle, pending_queue: HashSet::new() }
     }
 
-    pub fn dispatch(&self, event: SenderEvent) {
+    pub fn dispatch(&mut self, event: SenderEvent) {
         match event {
-            SenderEvent::Ack(uuid) => {},
-            SenderEvent::Msg(msg) => {},
-            SenderEvent::Acked(Uuid) => {},
+            SenderEvent::Ack(uuid) => {
+                let mut stream = self.stream_handle.lock().unwrap();
+                let msg = Message::Ack(uuid);
+                let msg_b = Message::serialize(msg);
+
+                stream.write(&msg_b);
+            },
+            SenderEvent::Msg(msg) => {
+                let mut stream = self.stream_handle.lock().unwrap();
+                let msg = Message::new(msg);
+
+                let uuid = msg.get_uuid();
+                self.pending_queue.insert(*uuid);
+
+                let msg_b = Message::serialize(msg);
+
+                stream.write(&msg_b);
+            },
+            SenderEvent::Acked(uuid) => {
+                &self.pending_queue.remove(&uuid);
+                println!("Message acknowledged! {}", uuid);
+            },
         }
     }
 }
