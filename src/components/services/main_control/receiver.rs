@@ -13,6 +13,11 @@ pub async fn start(
     loop {
         let mut pkt_len: [u8;1] = [0; 1];
         match socket_read.read(&mut pkt_len).await {
+            // Client disconnect
+            Ok(0) => {
+                event_sender.send(Event::ClientDc).await?
+            },
+            // Received packet
             Ok(1) => {
                 let mut msg = vec![0; pkt_len[0] as usize];
                 if let Ok(n) = socket_read.read(&mut msg).await {

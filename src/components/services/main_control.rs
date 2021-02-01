@@ -75,6 +75,10 @@ async fn start_event_loop(
                     debug!("Message acknowledged {:?}", uuid);
                     sender_srv_dispatch.send(sender::SenderEvent::Acked(uuid.clone())).await?;
                 },
+                Event::ClientDc => {
+                    // Terminate the event loop
+                    break Ok(());
+                }
             }
         }
     }
@@ -86,4 +90,5 @@ pub enum Event
     RecvMsg(Uuid, Vec<u8>),
     SendMsg(Vec<u8>),
     AckMsg(Uuid),
+    ClientDc,
 }
