@@ -1,6 +1,7 @@
 use std::thread;
-use std::net::TcpStream;
+use tokio::net::TcpStream;
 use std::sync::{Arc, Mutex};
+use tokio::io::AsyncReadExt;
 use std::io::Read;
 use std::sync::mpsc::{Receiver, Sender};
 use std::time::Duration;

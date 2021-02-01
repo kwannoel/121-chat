@@ -1,8 +1,9 @@
 use std::collections::HashSet;
-use std::net::TcpStream;
+use tokio::net::TcpStream;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 use std::io::Write;
+use tokio::io::AsyncWriteExt;
 use std::sync::mpsc::Receiver;
 
 use super::messages::Message;
