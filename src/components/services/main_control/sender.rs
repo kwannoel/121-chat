@@ -1,3 +1,4 @@
+use log::info;
 use std::collections::HashSet;
 use tokio::io::AsyncWriteExt;
 use tokio::net::tcp::OwnedWriteHalf;
@@ -29,6 +30,7 @@ pub async fn start(
                     pending_queue.insert(*uuid);
                 },
                 SenderEvent::Acked(uuid) => {
+                    info!("Acknowledged message {:?}", uuid);
                     pending_queue.remove(&uuid);
                 },
             },

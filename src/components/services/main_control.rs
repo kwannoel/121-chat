@@ -1,4 +1,4 @@
-use log::error;
+use log::{debug, error, info};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::{Receiver, Sender, channel};
 use tokio;
@@ -23,7 +23,7 @@ pub async fn start_chat_service(socket: TcpStream) -> Result<(), Box<dyn std::er
             error!(target: "Message sender", "{:?}", e);
         };
     });
-    println!("Started message sending service");
+    debug!("Started message sending service");
 
     let event_sender_2 = event_sender.clone();
     let receiver_child = tokio::spawn(async move {
@@ -31,7 +31,7 @@ pub async fn start_chat_service(socket: TcpStream) -> Result<(), Box<dyn std::er
             error!(target: "Message receiver", "{:?}", e);
         }
     });
-    println!("Started message receiving service");
+    debug!("Started message receiving service");
 
     let event_sender_3 = event_sender.clone();
     let input_child = tokio::spawn(async move {
@@ -41,10 +41,8 @@ pub async fn start_chat_service(socket: TcpStream) -> Result<(), Box<dyn std::er
     });
 
     /* EVENT LOOP */
-    println!("Event loop started");
     start_event_loop(event_receiver, sender_srv_dispatch).await?;
-
-    println!("Event loop ended");
+    debug!("Event loop ended");
 
     tokio::try_join!(
         sender_child,
@@ -61,24 +59,21 @@ async fn start_event_loop(
     sender_srv_dispatch: Sender<sender::SenderEvent>)
 -> Result<(), Box<dyn std::error::Error>> {
     loop {
-        match event_receiver.recv().await {
-            Some(event) => match event {
+        if let Some(event) = event_receiver.recv().await {
+            match event {
                 Event::RecvMsg(uuid, msg) => {
-                    println!("received message: {:?}", msg);
+                    info!("received message: {:?}", msg);
                     sender_srv_dispatch.send(sender::SenderEvent::Ack(uuid.clone())).await?;
                 },
 
                 Event::SendMsg(msg) => {
-                    println!("Sending message {:?}", msg);
+                    info!("Sending message {:?}", msg);
                     sender_srv_dispatch.send(sender::SenderEvent::Msg(msg.to_vec())).await?;
                 },
 
                 Event::AckMsg(uuid) => {
                     sender_srv_dispatch.send(sender::SenderEvent::Acked(uuid.clone())).await?;
                 },
-            }
-            None => {
-                println!("No Events");
             }
         }
     }

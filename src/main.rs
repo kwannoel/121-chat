@@ -1,4 +1,5 @@
 use tokio;
+use env_logger;
 
 mod components;
 
@@ -7,6 +8,7 @@ use crate::components::services;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::init();
     // INITIALIZE
     let mode = config::Mode::new();
     match mode {

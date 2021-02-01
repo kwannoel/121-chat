@@ -1,3 +1,4 @@
+use log::error;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -50,28 +51,27 @@ impl Message {
     }
 
     // Convert from bytes
-    pub fn deserialize(raw_msg: Vec<u8>) -> Message {
+    pub fn deserialize(raw_msg: Vec<u8>) -> Option<Message> {
         match raw_msg[0] {
             // Message
             0 => {
-                println!("Ack de");
                 let mut uuid_bytes: [u8; 16] = [0; 16];
                 uuid_bytes[..].clone_from_slice(&raw_msg[1..17]);
                 let uuid = Uuid::from_bytes(uuid_bytes);
-                return Message::Ack(uuid);
+                return Some(Message::Ack(uuid));
             },
             1 => {
-                println!("Msg de");
                 let mut uuid_bytes: [u8; 16] = [0; 16];
-                println!("uuid de");
                 uuid_bytes[..].clone_from_slice(&raw_msg[1..17]);
                 let uuid = Uuid::from_bytes(uuid_bytes);
-                println!("msg cont de");
 
                 let msg = &raw_msg[17..];
-                return Message::Msg(uuid, msg.to_vec());
+                return Some(Message::Msg(uuid, msg.to_vec()));
             },
-            _ => panic!("Invalid message code")
+            _ => {
+                error!(target: "Message serialization", "Invalid packet: {:?}", raw_msg);
+                return None;
+            }
         }
 
     }
@@ -112,7 +112,7 @@ mod tests {
         let message = Message::Ack(uuid);
 
         let serialized_message = Message::serialize(message.clone());
-        let original_message = Message::deserialize(serialized_message);
+        let original_message = Message::deserialize(serialized_message[1..].to_vec()).unwrap();
         assert_eq!(message, original_message);
     }
 
@@ -124,7 +124,7 @@ mod tests {
         let message = Message::Msg(uuid, msg.clone());
 
         let serialized_message = Message::serialize(message.clone());
-        let original_message = Message::deserialize(serialized_message);
+        let original_message = Message::deserialize(serialized_message[1..].to_vec()).unwrap();
         assert_eq!(message, original_message);
     }
 }

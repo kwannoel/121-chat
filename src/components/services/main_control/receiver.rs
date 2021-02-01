@@ -13,29 +13,22 @@ pub async fn start(
     loop {
         let mut pkt_len: [u8;1] = [0; 1];
         match socket_read.read(&mut pkt_len).await {
-            Ok(n) => {
-                if n == 1 {
-                    let mut msg = vec![0; pkt_len[0] as usize];
-                    match socket_read.read(&mut msg).await {
-                        Ok(n) => {
-                            if n > 0 {
-                                match Message::deserialize(msg) {
-                                    Message::Ack(uuid) =>
-                                        event_sender.send(Event::AckMsg(uuid)).await?,
-                                    Message::Msg(uuid, msg_contents) =>
-                                        event_sender.send(Event::RecvMsg(uuid, msg_contents)).await?,
-                                }
+            Ok(1) => {
+                let mut msg = vec![0; pkt_len[0] as usize];
+                if let Ok(n) = socket_read.read(&mut msg).await {
+                    if n > 0 {
+                        if let Some(msg) = Message::deserialize(msg) {
+                            match msg {
+                                Message::Ack(uuid) =>
+                                    event_sender.send(Event::AckMsg(uuid)).await?,
+                                Message::Msg(uuid, msg_contents) =>
+                                    event_sender.send(Event::RecvMsg(uuid, msg_contents)).await?,
                             }
-                        },
-                        _ => {
-                            println!("Failed to get msg");
                         }
                     }
                 }
             },
-            _ => {
-                println!("Failed to get msg");
-            },
+            _ => {},
         }
     }
 }
