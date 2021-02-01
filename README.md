@@ -9,8 +9,6 @@ Application should start in two modes:
 
 After connection is established, users on either side (server and client) can send messages to the other side. After connection is terminated by the client - server continues waiting for another client. The receiving side should acknowledge every incoming message (automatically send back "message received'' indication), the sending side should show the roundtrip time for acknowledgment. Wire protocol shouldn't make any assumptions on the message contents (e.g. allowed byte values, character encoding, etc).
 
-UI is your choice - can be just a console.
-
 Requirements:
 
     Application is to be compiled and run on linux
@@ -27,6 +25,7 @@ RUST_LOG=info MODE=server cargo run
 
 - Start client
 ``` sh
+RUST_LOG=info MODE=client cargo run
 RUST_LOG=info MODE=client IP_ADDR=127.0.0.1 cargo run
 ```
 

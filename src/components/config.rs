@@ -20,6 +20,7 @@ impl Config {
                 };
                 return Self::Client(format!("{}:8000", ip_addr));
             }
+            panic!("Invalid mode")
         }
         panic!("Mode not supplied");
     }

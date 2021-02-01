@@ -31,9 +31,9 @@ pub async fn start(
 
                     info!("[SENT] {:?}", &id);
                 }
-                SenderEvent::Acked(uuid) => {
-                    pending_queue.remove(&uuid);
-                    info!("[ACKED] {:?}", &uuid);
+                SenderEvent::Acked(id) => {
+                    pending_queue.remove(&id);
+                    info!("[ACKED] {:?}", &id);
                 }
             },
             _ => {}

@@ -58,7 +58,7 @@ async fn start_event_loop(
         if let Some(event) = event_receiver.recv().await {
             match event {
                 Event::RecvMsg(uuid, msg) => {
-                    info!("[RECV] {:?} {}", uuid, Message::pretty_print_contents(&msg));
+                    info!("[RECV]\nUUID: {:?}\nMSG: {}", uuid, Message::pretty_print_contents(&msg));
                     sender_srv_dispatch
                         .send(sender::SenderEvent::Ack(uuid.clone()))
                         .await?;
