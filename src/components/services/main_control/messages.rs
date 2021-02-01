@@ -4,8 +4,8 @@ use uuid::Uuid;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Message {
-    Ack(Uuid), // 0
-    Msg(Uuid, Vec<u8>) // 1
+    Ack(Uuid),          // 0
+    Msg(Uuid, Vec<u8>), // 1
 }
 
 impl Message {
@@ -20,7 +20,7 @@ impl Message {
         return match str::from_utf8(msg) {
             Ok(msg_str) => msg_str.to_string(),
             _ => format!("{:?}", msg),
-        }
+        };
     }
 
     // BYTES SERIALIZATION
@@ -40,7 +40,7 @@ impl Message {
 
                 let mut uuid_b = uuid.as_bytes().to_vec();
                 msg_buffer.append(&mut uuid_b); // Uuid
-            },
+            }
             Message::Msg(uuid, msg_contents) => {
                 let mut msg_contents = msg_contents.clone();
                 let mut uuid_b = uuid.as_bytes().to_vec();
@@ -71,7 +71,7 @@ impl Message {
                 uuid_bytes[..].clone_from_slice(&raw_msg[1..17]);
                 let uuid = Uuid::from_bytes(uuid_bytes);
                 return Some(Message::Ack(uuid));
-            },
+            }
             1 => {
                 let mut uuid_bytes: [u8; 16] = [0; 16];
                 uuid_bytes[..].clone_from_slice(&raw_msg[1..17]);
@@ -79,13 +79,12 @@ impl Message {
 
                 let msg = &raw_msg[17..];
                 return Some(Message::Msg(uuid, msg.to_vec()));
-            },
+            }
             _ => {
                 error!(target: "Message serialization", "Invalid packet: {:?}", raw_msg);
                 return None;
             }
         }
-
     }
 
     pub fn new(msg: Vec<u8>) -> Message {
@@ -111,7 +110,7 @@ mod tests {
     fn ser_len_msg_message() {
         let uuid_str = "936DA01F9ABD4d9d80C702AF85C822A8";
         let uuid = Uuid::parse_str(uuid_str).unwrap();
-        let msg: Vec<u8> = vec![1,2,3,4];
+        let msg: Vec<u8> = vec![1, 2, 3, 4];
         let message = Message::Msg(uuid, msg);
         let serialized_message = Message::serialize(&message);
         assert_eq!(serialized_message[0], 21);
@@ -132,7 +131,7 @@ mod tests {
     fn conv_msg_message() {
         let uuid_str = "936DA01F9ABD4d9d80C702AF85C822A8";
         let uuid = Uuid::parse_str(uuid_str).unwrap();
-        let msg: Vec<u8> = vec![1,2,3,4];
+        let msg: Vec<u8> = vec![1, 2, 3, 4];
         let message = Message::Msg(uuid, msg.clone());
 
         let serialized_message = Message::serialize(&message);

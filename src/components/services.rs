@@ -1,5 +1,5 @@
-use tokio::net::{TcpListener, TcpStream};
 use log::info;
+use tokio::net::{TcpListener, TcpStream};
 
 mod main_control;
 
@@ -14,7 +14,6 @@ pub async fn client(ip_addr: String) -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
 
 pub async fn server(port: String) -> Result<(), Box<dyn std::error::Error>> {
     info!("Server initialized");

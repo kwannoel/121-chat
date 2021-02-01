@@ -4,9 +4,7 @@ use tokio::sync::mpsc::Sender;
 
 use super::Event;
 
-pub async fn start(
-    event_queue: Sender<Event>
-) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn start(event_queue: Sender<Event>) -> Result<(), Box<dyn std::error::Error>> {
     loop {
         let mut buffer = vec![];
         let mut stdin = io::stdin();

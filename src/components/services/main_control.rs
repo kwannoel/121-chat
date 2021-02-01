@@ -1,20 +1,19 @@
 use log::{debug, error, info};
-use tokio::net::TcpStream;
-use tokio::sync::mpsc::{Receiver, Sender, channel};
 use tokio;
+use tokio::net::TcpStream;
+use tokio::sync::mpsc::{channel, Receiver, Sender};
 use uuid::Uuid;
 
-pub mod sender;
-pub mod receiver;
 pub mod input;
 pub mod messages;
+pub mod receiver;
+pub mod sender;
 
 use messages::Message;
 
 /* MAIN CONTROL */
 
 pub async fn start_chat_service(socket: TcpStream) -> Result<(), Box<dyn std::error::Error>> {
-
     /* INIT */
     let (event_sender, event_receiver) = channel(10);
     let (sender_srv_dispatch, sender_event_receiver) = channel(10);
@@ -46,33 +45,36 @@ pub async fn start_chat_service(socket: TcpStream) -> Result<(), Box<dyn std::er
     start_event_loop(event_receiver, sender_srv_dispatch).await?;
 
     // This thread terminates when client terminates
-    tokio::try_join!(
-        receiver_child
-    )?;
+    tokio::try_join!(receiver_child)?;
 
     return Ok(());
 }
 
-
 async fn start_event_loop(
     mut event_receiver: Receiver<Event>,
-    sender_srv_dispatch: Sender<sender::SenderEvent>)
--> Result<(), Box<dyn std::error::Error>> {
+    sender_srv_dispatch: Sender<sender::SenderEvent>,
+) -> Result<(), Box<dyn std::error::Error>> {
     loop {
         if let Some(event) = event_receiver.recv().await {
             match event {
                 Event::RecvMsg(uuid, msg) => {
                     info!("[RECV] {:?} {}", uuid, Message::pretty_print_contents(&msg));
-                    sender_srv_dispatch.send(sender::SenderEvent::Ack(uuid.clone())).await?;
-                },
+                    sender_srv_dispatch
+                        .send(sender::SenderEvent::Ack(uuid.clone()))
+                        .await?;
+                }
 
                 Event::SendMsg(msg) => {
-                    sender_srv_dispatch.send(sender::SenderEvent::Msg(msg.to_vec())).await?;
-                },
+                    sender_srv_dispatch
+                        .send(sender::SenderEvent::Msg(msg.to_vec()))
+                        .await?;
+                }
 
                 Event::AckMsg(uuid) => {
-                    sender_srv_dispatch.send(sender::SenderEvent::Acked(uuid.clone())).await?;
-                },
+                    sender_srv_dispatch
+                        .send(sender::SenderEvent::Acked(uuid.clone()))
+                        .await?;
+                }
                 Event::ClientDc => {
                     // Terminate the event loop
                     return Ok(());
@@ -83,10 +85,9 @@ async fn start_event_loop(
 }
 
 #[derive(Clone, Debug)]
-pub enum Event
-{
+pub enum Event {
     RecvMsg(Uuid, Vec<u8>), // Handle a received message
-    SendMsg(Vec<u8>), // Send out a message
-    AckMsg(Uuid), // Message<uuid> acknowledged
-    ClientDc, // server/client disconnected
+    SendMsg(Vec<u8>),       // Send out a message
+    AckMsg(Uuid),           // Message<uuid> acknowledged
+    ClientDc,               // server/client disconnected
 }
