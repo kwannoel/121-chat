@@ -44,3 +44,14 @@ Client and Server can share the same chat protocol, and utilize their own connec
 ## Architecture
 
 We try to follow a message passing style, with `main_control` receiving event messages and handling them accordingly.
+
+We maintain 3 threads throughout application lifetime, which communicate via `mpsc`s.
+
+These are `receiver`, `sender` and `input`. 
+
+The `receiver` thread listens to `TCPStream`, notifies main event loop via `Event` messsages.
+Likewise, `input` thread listens to `TCPStream`, notifies main event loop via `Event` messages.
+
+The `sender` thread is where `send` message jobs get dispatched to, from `main_control`.
+
+We also use `tokio`'s runtime. This is because it can help us synchronize simultaneous `read` and `write` to a `TcpStream`, without having to resort to synchronization primitives such as `Mutex`.
