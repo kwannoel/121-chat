@@ -52,4 +52,4 @@ Likewise, `input` thread listens to `Stdin`, notifies main event loop via `Event
 
 The `sender` thread is where `send` message jobs get dispatched to, from `main_control`.
 
-We also use `tokio`'s runtime. This is because it can help us synchronize simultaneous `read` and `write` to a `TcpStream`, without having to resort to synchronization primitives such as `Mutex`.
+We also use `tokio`'s runtime. This is because it can help us synchronize concurrent `read` and `write` to a `TcpStream`, without having to resort to synchronization primitives such as `Mutex`.
