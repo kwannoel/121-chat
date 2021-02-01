@@ -21,7 +21,7 @@ impl Message {
     // [1]: 0 | 1 (Ack | Msg)
     // [2-17]: Uuid (End for Ack)
     // [17-N]: Message contents (End for Msg)
-    pub fn serialize(msg: Message) -> Vec<u8> {
+    pub fn serialize(msg: &Message) -> Vec<u8> {
         let mut msg_buffer = vec![];
 
         match msg {
@@ -33,18 +33,18 @@ impl Message {
                 let mut uuid_b = uuid.as_bytes().to_vec();
                 msg_buffer.append(&mut uuid_b); // Uuid
             },
-            Message::Msg(uuid, mut msg) => {
-
+            Message::Msg(uuid, msg_contents) => {
+                let mut msg_contents = msg_contents.clone();
                 let mut uuid_b = uuid.as_bytes().to_vec();
                 let uuid_len = uuid_b.len();
-                let msg_len = msg.len();
+                let msg_len = msg_contents.len();
                 let pkt_len = uuid_len + msg_len + 1;
 
                 msg_buffer.push(pkt_len as u8); // Pkt len
 
                 msg_buffer.push(1); // Msg code
                 msg_buffer.append(&mut uuid_b); // Uuid
-                msg_buffer.append(&mut msg); // Msg contents
+                msg_buffer.append(&mut msg_contents); // Msg contents
             }
         }
         return msg_buffer;
@@ -91,7 +91,7 @@ mod tests {
         let uuid_str = "936DA01F9ABD4d9d80C702AF85C822A8";
         let uuid = Uuid::parse_str(uuid_str).unwrap();
         let message = Message::Ack(uuid);
-        let serialized_message = Message::serialize(message.clone());
+        let serialized_message = Message::serialize(&message);
         assert_eq!(serialized_message[0], 17);
     }
 
@@ -101,7 +101,7 @@ mod tests {
         let uuid = Uuid::parse_str(uuid_str).unwrap();
         let msg: Vec<u8> = vec![1,2,3,4];
         let message = Message::Msg(uuid, msg);
-        let serialized_message = Message::serialize(message.clone());
+        let serialized_message = Message::serialize(&message);
         assert_eq!(serialized_message[0], 21);
     }
 
@@ -111,7 +111,7 @@ mod tests {
         let uuid = Uuid::parse_str(uuid_str).unwrap();
         let message = Message::Ack(uuid);
 
-        let serialized_message = Message::serialize(message.clone());
+        let serialized_message = Message::serialize(&message);
         let original_message = Message::deserialize(serialized_message[1..].to_vec()).unwrap();
         assert_eq!(message, original_message);
     }
@@ -123,7 +123,7 @@ mod tests {
         let msg: Vec<u8> = vec![1,2,3,4];
         let message = Message::Msg(uuid, msg.clone());
 
-        let serialized_message = Message::serialize(message.clone());
+        let serialized_message = Message::serialize(&message);
         let original_message = Message::deserialize(serialized_message[1..].to_vec()).unwrap();
         assert_eq!(message, original_message);
     }

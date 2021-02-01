@@ -1,4 +1,4 @@
-use log::{debug, error, info};
+use log::{debug, error};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::{Receiver, Sender, channel};
 use tokio;
@@ -62,16 +62,17 @@ async fn start_event_loop(
         if let Some(event) = event_receiver.recv().await {
             match event {
                 Event::RecvMsg(uuid, msg) => {
-                    info!("received message: {:?}", msg);
+                    debug!("Receive message: {:?}", msg);
                     sender_srv_dispatch.send(sender::SenderEvent::Ack(uuid.clone())).await?;
                 },
 
                 Event::SendMsg(msg) => {
-                    info!("Sending message {:?}", msg);
+                    debug!("Send message {:?}", msg);
                     sender_srv_dispatch.send(sender::SenderEvent::Msg(msg.to_vec())).await?;
                 },
 
                 Event::AckMsg(uuid) => {
+                    debug!("Message acknowledged {:?}", uuid);
                     sender_srv_dispatch.send(sender::SenderEvent::Acked(uuid.clone())).await?;
                 },
             }

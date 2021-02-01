@@ -16,21 +16,25 @@ pub async fn start(
             Some(event) => match event {
                 SenderEvent::Ack(uuid) => {
                     let msg = Message::Ack(uuid);
-                    let msg_b = Message::serialize(msg);
+                    let msg_b = Message::serialize(&msg);
+
+                    info!("Acknowledging message {:?}", &msg);
 
                     socket_write.write_all(&msg_b).await?;
                 },
                 SenderEvent::Msg(msg) => {
                     let msg = Message::new(msg);
-                    let msg_b = Message::serialize(msg.clone());
+                    let msg_b = Message::serialize(&msg);
 
                     socket_write.write_all(&msg_b).await?;
+
+                    info!("Sent message {:?}", &msg);
 
                     let uuid = msg.get_uuid();
                     pending_queue.insert(*uuid);
                 },
                 SenderEvent::Acked(uuid) => {
-                    info!("Acknowledged message {:?}", uuid);
+                    info!("Server acknowledged message {:?}", &uuid);
                     pending_queue.remove(&uuid);
                 },
             },
