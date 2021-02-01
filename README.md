@@ -30,14 +30,18 @@ MODE=server PORT=<port> cargo run
 MODE=client IP_ADDR=<ip_addr> cargo run
 ```
 
-# Notes
+- Chatting
+
+Type your message and send EOF with `^D`, the text will be forwarded to the other chat client.
+
+- Disconnect
+
+Send SIGINT with `^C`.
+
+# Approach
 
 Client and Server can share the same chat protocol, and utilize their own connection protocols, since their in-chat behaviour is the same.
 
-# Architecture
+## Architecture
 
-# Properties of data structure
-
-O(1) insert O(1) lookup O(1) delete, small samples. just gonna use a hashmap first
-
-serialization: vec to array: https://stackoverflow.com/questions/29570607/is-there-a-good-way-to-convert-a-vect-to-an-array
+We try to follow a message passing style, with `main_control` receiving event messages and handling them accordingly.
