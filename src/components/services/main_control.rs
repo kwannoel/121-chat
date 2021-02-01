@@ -1,8 +1,8 @@
 use std::io::prelude::*;
 use tokio::net::TcpStream;
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{Receiver, Sender, channel};
-use std::thread;
+use tokio::sync::mpsc::{Receiver, Sender, channel};
+use tokio;
 use uuid::Uuid;
 
 pub mod sender;
@@ -12,48 +12,48 @@ pub mod messages;
 
 /* MAIN CONTROL */
 
-pub fn start_chat_service(stream_handle: Arc<Mutex<TcpStream>>) -> std::io::Result<()> {
+pub async fn start_chat_service(socket: TcpStream) -> std::io::Result<()> {
 
     /* INIT */
-    let (event_sender, event_receiver) = channel();
+    let (event_sender, event_receiver) = channel(100);
+    let (sender_srv_dispatch, sender_event_receiver) = channel(100);
+    let (socket_read, socket_write) = socket.into_split();
 
-    let (sender_srv_dispatch, sender_event_receiver) = channel();
-
-    let stream_handle_1 = Arc::clone(&stream_handle);
-    let sender_child = thread::spawn(move || {
-        sender::start(stream_handle_1, sender_event_receiver);
+    let sender_child = tokio::spawn(async move {
+        sender::start(socket_write, sender_event_receiver).await;
     });
     println!("Started message sending service");
 
-    let stream_handle_2 = Arc::clone(&stream_handle);
     let event_sender_2 = event_sender.clone();
-    let receiver_child = thread::spawn(move || {
-        receiver::start(event_sender_2, stream_handle_2);
+    let receiver_child = tokio::spawn(async move {
+        receiver::start(event_sender_2, socket_read).await;
     });
     println!("Started message receiving service");
 
     let event_sender_3 = event_sender.clone();
-    let input_child = thread::spawn(move || {
+    let input_child = tokio::spawn(async move {
         input::start(event_sender_3);
     });
 
     /* EVENT LOOP */
     println!("Event loop started");
-    start_event_loop(event_receiver, sender_srv_dispatch);
+    start_event_loop(event_receiver, sender_srv_dispatch).await;
 
     println!("Event loop ended");
 
-    sender_child.join();
-    receiver_child.join();
-    input_child.join();
+    tokio::join!(
+        sender_child,
+        receiver_child,
+        input_child
+    );
     return Ok(());
 }
 
 
-fn start_event_loop(event_receiver: Receiver<Event>, sender_srv_dispatch: Sender<sender::SenderEvent>) {
+async fn start_event_loop(mut event_receiver: Receiver<Event>, sender_srv_dispatch: Sender<sender::SenderEvent>) {
     loop {
-        match event_receiver.recv() {
-            Ok(event) => match event {
+        match event_receiver.recv().await {
+            Some(event) => match event {
                 Event::RecvMsg(uuid, msg) => {
                     println!("received message: {:?}", msg);
                     sender_srv_dispatch.send(sender::SenderEvent::Ack(uuid.clone()));
@@ -68,8 +68,8 @@ fn start_event_loop(event_receiver: Receiver<Event>, sender_srv_dispatch: Sender
                     sender_srv_dispatch.send(sender::SenderEvent::Acked(uuid.clone()));
                 },
             }
-            Err(e) => {
-                println!("{:?}", e);
+            None => {
+                println!("No Events");
             }
         }
     }

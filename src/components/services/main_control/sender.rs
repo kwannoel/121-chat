@@ -1,61 +1,33 @@
 use std::collections::HashSet;
 use tokio::net::TcpStream;
+use tokio::net::tcp::OwnedWriteHalf;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 use std::io::Write;
 use tokio::io::AsyncWriteExt;
-use std::sync::mpsc::Receiver;
+use tokio::sync::mpsc::Receiver;
 
 use super::messages::Message;
-pub fn start(stream_handle: Arc<Mutex<TcpStream>>, sender_event_receiver: Receiver<SenderEvent>) {
+pub async fn start(mut socket_write: OwnedWriteHalf, mut sender_event_receiver: Receiver<SenderEvent>) {
     let mut pending_queue = HashSet::new();
     loop {
-        println!("asd2");
-        match sender_event_receiver.recv() {
-            Ok(event) => match event {
+        match sender_event_receiver.recv().await {
+            Some(event) => match event {
                 SenderEvent::Ack(uuid) => {
-                    loop {
-                        match stream_handle.try_lock() {
-                            Ok(mut stream) => {
-                                println!("Sending ack");
-                                let msg = Message::Ack(uuid);
-                                let msg_b = Message::serialize(msg);
+                    let msg = Message::Ack(uuid);
+                    let msg_b = Message::serialize(msg);
 
-                                stream.write(&msg_b);
-                                drop(stream);
-                                break;
-                            },
-                            Err(e) => {
-                                println!("trying to ack");
-                                println!("{:?}", e);
-                            }
-                        }
-                    }
+                    socket_write.write_all(&msg_b).await;
+                    break;
                 },
                 SenderEvent::Msg(msg) => {
-                    println!("dispatched message {:?}", msg);
-                    loop {
-                        match stream_handle.try_lock() {
-                            Ok(mut stream) => {
-                                let msg = Message::new(msg);
-                                let msg_b = Message::serialize(msg.clone());
-                                println!("serialized message");
+                    let msg = Message::new(msg);
+                    let msg_b = Message::serialize(msg.clone());
 
-                                stream.write(&msg_b);
-                                drop(stream);
+                    socket_write.write_all(&msg_b).await;
 
-                                let uuid = msg.get_uuid();
-                                pending_queue.insert(*uuid);
-                                println!("inserted message");
-                                println!("sent message {:?}", msg_b);
-                                break;
-                            },
-                            Err(e) => {
-                                println!("Cannot acquire lock");
-                                println!("{:?}", e);
-                            }
-                        }
-                    }
+                    let uuid = msg.get_uuid();
+                    pending_queue.insert(*uuid);
                 },
                 SenderEvent::Acked(uuid) => {
                     pending_queue.remove(&uuid);

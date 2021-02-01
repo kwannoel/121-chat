@@ -6,11 +6,10 @@ mod main_control;
 pub async fn client(ip_addr: String) -> std::io::Result<()> {
     println!("Client initialized");
 
-    let stream = TcpStream::connect(ip_addr.clone()).await?;
+    let socket = TcpStream::connect(ip_addr.clone()).await?;
     println!("Connected to Server: {}", ip_addr);
 
-    let stream_handle = Arc::new(Mutex::new(stream));
-    main_control::start_chat_service(stream_handle.clone());
+    main_control::start_chat_service(socket);
     println!("Chat service ended");
 
     Ok(())
@@ -23,11 +22,9 @@ pub async fn server(port: String) -> std::io::Result<()> {
     let listener = TcpListener::bind(format!("127.0.0.1:{}", port.clone())).await?;
 
     loop {
-        let (s, _) = listener.accept().await?;
+        let (socket, _) = listener.accept().await?;
         println!("Client connected: 127.0.0.1:{}", port);
-
-        let stream_handle = Arc::new(Mutex::new(s));
-        main_control::start_chat_service(stream_handle.clone());
+        main_control::start_chat_service(socket);
         println!("Chat service ended");
     }
 
