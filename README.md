@@ -12,27 +12,29 @@ After connection is established, users on either side (server and client) can se
 # Usage
 
 - Start server
-``` sh
-RUST_LOG=info MODE=server cargo run
-```
+
+    ``` sh
+    RUST_LOG=info MODE=server cargo run
+    ```
 
 - Start client
-``` sh
-RUST_LOG=info MODE=client cargo run
-RUST_LOG=info MODE=client IP_ADDR=127.0.0.1 cargo run
-```
+
+    ``` sh
+    RUST_LOG=info MODE=client cargo run
+    RUST_LOG=info MODE=client IP_ADDR=127.0.0.1 cargo run
+    ```
 
 - Chatting
 
-1. Type your message
-2. press `ENTER`
-3. send `EOF` to terminal with `^D`
+    1. Type your message
+    2. press `ENTER`
+    3. send `EOF` to terminal with `^D`
 
-The text will then be forwarded to the other chat client.
+    The text will then be forwarded to the other chat client.
 
 - Disconnect
 
-Send SIGINT with `^C`.
+    Send SIGINT with `^C`.
 
 # Approach
 
