@@ -1,11 +1,10 @@
 use std::collections::HashSet;
+use std::sync::{Arc, Mutex};
+use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::net::tcp::OwnedWriteHalf;
-use std::sync::{Arc, Mutex};
-use uuid::Uuid;
-use std::io::Write;
-use tokio::io::AsyncWriteExt;
 use tokio::sync::mpsc::Receiver;
+use uuid::Uuid;
 
 use super::messages::Message;
 pub async fn start(mut socket_write: OwnedWriteHalf, mut sender_event_receiver: Receiver<SenderEvent>) {

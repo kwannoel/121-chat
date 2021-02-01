@@ -32,7 +32,7 @@ pub async fn start_chat_service(socket: TcpStream) -> std::io::Result<()> {
 
     let event_sender_3 = event_sender.clone();
     let input_child = tokio::spawn(async move {
-        input::start(event_sender_3);
+        input::start(event_sender_3).await;
     });
 
     /* EVENT LOOP */
@@ -56,16 +56,16 @@ async fn start_event_loop(mut event_receiver: Receiver<Event>, sender_srv_dispat
             Some(event) => match event {
                 Event::RecvMsg(uuid, msg) => {
                     println!("received message: {:?}", msg);
-                    sender_srv_dispatch.send(sender::SenderEvent::Ack(uuid.clone()));
+                    sender_srv_dispatch.send(sender::SenderEvent::Ack(uuid.clone())).await;
                 },
 
                 Event::SendMsg(msg) => {
                     println!("Sending message {:?}", msg);
-                    sender_srv_dispatch.send(sender::SenderEvent::Msg(msg.to_vec()));
+                    sender_srv_dispatch.send(sender::SenderEvent::Msg(msg.to_vec())).await;
                 },
 
                 Event::AckMsg(uuid) => {
-                    sender_srv_dispatch.send(sender::SenderEvent::Acked(uuid.clone()));
+                    sender_srv_dispatch.send(sender::SenderEvent::Acked(uuid.clone())).await;
                 },
             }
             None => {

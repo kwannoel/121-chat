@@ -36,7 +36,7 @@ impl Message {
 
                 let mut uuid_b = uuid.as_bytes().to_vec();
                 let uuid_len = uuid_b.len();
-                let mut msg_len = msg.len();
+                let msg_len = msg.len();
                 let pkt_len = uuid_len + msg_len + 1;
 
                 msg_buffer.push(pkt_len as u8); // Pkt len

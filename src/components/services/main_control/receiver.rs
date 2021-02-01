@@ -1,10 +1,9 @@
 use std::thread;
+use std::time::Duration;
+use tokio::io::AsyncReadExt;
 use tokio::net::TcpStream;
 use tokio::net::tcp::OwnedReadHalf;
-use tokio::io::AsyncReadExt;
-use std::io::Read;
 use tokio::sync::mpsc::{Receiver, Sender};
-use std::time::Duration;
 
 use super::messages::Message;
 use crate::services::main_control::Event;
@@ -25,7 +24,7 @@ pub async fn start(event_sender: Sender<Event>, mut socket_read: OwnedReadHalf) 
                                         event_sender.send(Event::AckMsg(uuid));
                                     },
                                     Message::Msg(uuid, msg_contents) => {
-                                        event_sender.send(Event::RecvMsg(uuid, msg_contents));
+                                        event_sender.send(Event::RecvMsg(uuid, msg_contents)).await;
                                     }
                                 }
                             }
