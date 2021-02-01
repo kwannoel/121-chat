@@ -19,8 +19,8 @@ impl Message {
     // -------------------
     // [0]: packet length N (Max length 255)
     // [1]: 0 | 1 (Ack | Msg)
-    // [2-17]: Uuid (End for Ack)
-    // [17-N]: Message contents (End for Msg)
+    // [2-18]: Uuid (End for Ack)
+    // [18-N]: Message contents (End for Msg)
     pub fn serialize(msg: &Message) -> Vec<u8> {
         let mut msg_buffer = vec![];
 
@@ -50,7 +50,11 @@ impl Message {
         return msg_buffer;
     }
 
-    // Convert from bytes
+    // BYTES DESERIALIZATION
+    // -------------------
+    // [0]: 0 | 1 (Ack | Msg)
+    // [1-17]: Uuid (End for Ack)
+    // [17-N]: Message contents (End for Msg)
     pub fn deserialize(raw_msg: Vec<u8>) -> Option<Message> {
         match raw_msg[0] {
             // Message
