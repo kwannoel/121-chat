@@ -24,7 +24,11 @@ RUST_LOG=info MODE=client IP_ADDR=127.0.0.1 cargo run
 
 - Chatting
 
-Type your message press `ENTER` and send `EOF` to terminal with `^D`, the text will be forwarded to the other chat client.
+1. Type your message
+2. press `ENTER`
+3. send `EOF` to terminal with `^D`
+
+The text will then be forwarded to the other chat client.
 
 - Disconnect
 
