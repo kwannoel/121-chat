@@ -14,13 +14,11 @@ pub async fn start(
     loop {
         match sender_event_receiver.recv().await {
             Some(event) => match event {
-                SenderEvent::Ack(uuid) => {
-                    let msg = Message::Ack(uuid);
+                SenderEvent::Ack(id) => {
+                    let msg = Message::Ack(id);
                     let msg_b = Message::serialize(&msg);
-
-                    info!("Acknowledging message {:?}", &msg);
-
                     socket_write.write_all(&msg_b).await?;
+                    info!("[ACKING] {:?}", id);
                 },
                 SenderEvent::Msg(msg) => {
                     let msg = Message::new(msg);
@@ -28,14 +26,14 @@ pub async fn start(
 
                     socket_write.write_all(&msg_b).await?;
 
-                    info!("Sent message {:?}", &msg);
+                    let id = msg.get_uuid();
+                    pending_queue.insert(*id);
 
-                    let uuid = msg.get_uuid();
-                    pending_queue.insert(*uuid);
+                    info!("[SENT] {:?}", &id);
                 },
                 SenderEvent::Acked(uuid) => {
-                    info!("Server acknowledged message {:?}", &uuid);
                     pending_queue.remove(&uuid);
+                    info!("[ACKED] {:?}", &uuid);
                 },
             },
             _ => {}

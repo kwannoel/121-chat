@@ -15,7 +15,8 @@ pub async fn start(
         match socket_read.read(&mut pkt_len).await {
             // Client disconnect
             Ok(0) => {
-                event_sender.send(Event::ClientDc).await?
+                event_sender.send(Event::ClientDc).await?;
+                break Ok(());
             },
             // Received packet
             Ok(1) => {

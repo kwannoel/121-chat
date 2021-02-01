@@ -1,4 +1,5 @@
 use log::error;
+use std::str;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -12,6 +13,13 @@ impl Message {
         match self {
             Self::Ack(uuid) => uuid,
             Self::Msg(uuid, _) => uuid,
+        }
+    }
+
+    pub fn pretty_print_contents(msg: &Vec<u8>) -> String {
+        return match str::from_utf8(msg) {
+            Ok(msg_str) => msg_str.to_string(),
+            _ => format!("{:?}", msg),
         }
     }
 

@@ -1,4 +1,4 @@
-use log::{debug, error};
+use log::{debug, error, info};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::{Receiver, Sender, channel};
 use tokio;
@@ -9,6 +9,8 @@ pub mod receiver;
 pub mod input;
 pub mod messages;
 
+use messages::Message;
+
 /* MAIN CONTROL */
 
 pub async fn start_chat_service(socket: TcpStream) -> Result<(), Box<dyn std::error::Error>> {
@@ -18,9 +20,9 @@ pub async fn start_chat_service(socket: TcpStream) -> Result<(), Box<dyn std::er
     let (sender_srv_dispatch, sender_event_receiver) = channel(10);
     let (socket_read, socket_write) = socket.into_split();
 
-    let sender_child = tokio::spawn(async move {
+    tokio::spawn(async move {
         if let Err(e) = sender::start(socket_write, sender_event_receiver).await {
-            error!(target: "Message sender", "{:?}", e);
+            error!("[MSG_SND] {:?}", e);
         };
     });
     debug!("Started message sending service");
@@ -28,26 +30,24 @@ pub async fn start_chat_service(socket: TcpStream) -> Result<(), Box<dyn std::er
     let event_sender_2 = event_sender.clone();
     let receiver_child = tokio::spawn(async move {
         if let Err(e) = receiver::start(event_sender_2, socket_read).await {
-            error!(target: "Message receiver", "{:?}", e);
+            error!("[MSG_RECV] {:?}", e);
         }
     });
     debug!("Started message receiving service");
 
     let event_sender_3 = event_sender.clone();
-    let input_child = tokio::spawn(async move {
+    tokio::spawn(async move {
         if let Err(e) = input::start(event_sender_3).await {
-            error!(target: "Input", "{:?}", e);
+            error!("[INPUT] {:?}", e);
         }
     });
 
     /* EVENT LOOP */
     start_event_loop(event_receiver, sender_srv_dispatch).await?;
-    debug!("Event loop ended");
 
+    // This thread terminates when client terminates
     tokio::try_join!(
-        sender_child,
-        receiver_child,
-        input_child
+        receiver_child
     )?;
 
     return Ok(());
@@ -62,22 +62,20 @@ async fn start_event_loop(
         if let Some(event) = event_receiver.recv().await {
             match event {
                 Event::RecvMsg(uuid, msg) => {
-                    debug!("Receive message: {:?}", msg);
+                    info!("[RECV] {:?} {}", uuid, Message::pretty_print_contents(&msg));
                     sender_srv_dispatch.send(sender::SenderEvent::Ack(uuid.clone())).await?;
                 },
 
                 Event::SendMsg(msg) => {
-                    debug!("Send message {:?}", msg);
                     sender_srv_dispatch.send(sender::SenderEvent::Msg(msg.to_vec())).await?;
                 },
 
                 Event::AckMsg(uuid) => {
-                    debug!("Message acknowledged {:?}", uuid);
                     sender_srv_dispatch.send(sender::SenderEvent::Acked(uuid.clone())).await?;
                 },
                 Event::ClientDc => {
                     // Terminate the event loop
-                    break Ok(());
+                    return Ok(());
                 }
             }
         }
@@ -87,8 +85,8 @@ async fn start_event_loop(
 #[derive(Clone, Debug)]
 pub enum Event
 {
-    RecvMsg(Uuid, Vec<u8>),
-    SendMsg(Vec<u8>),
-    AckMsg(Uuid),
-    ClientDc,
+    RecvMsg(Uuid, Vec<u8>), // Handle a received message
+    SendMsg(Vec<u8>), // Send out a message
+    AckMsg(Uuid), // Message<uuid> acknowledged
+    ClientDc, // server/client disconnected
 }
