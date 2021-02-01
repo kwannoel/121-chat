@@ -6,7 +6,7 @@ use crate::components::config;
 use crate::components::services;
 
 #[tokio::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // INITIALIZE
     let mode = config::Mode::new();
     match mode {

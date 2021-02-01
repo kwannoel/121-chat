@@ -227,6 +227,7 @@ dependencies = [
 name = "sync-server-client"
 version = "0.1.0"
 dependencies = [
+ "log",
  "tokio",
  "uuid",
 ]

@@ -1,5 +1,4 @@
 use std::env;
-use std::io::{self, Read};
 
 pub enum Mode {
     Server,

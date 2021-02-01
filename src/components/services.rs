@@ -1,9 +1,8 @@
 use tokio::net::{TcpListener, TcpStream};
-use std::sync::{Arc, Mutex};
 
 mod main_control;
 
-pub async fn client(ip_addr: String) -> std::io::Result<()> {
+pub async fn client(ip_addr: String) -> Result<(), Box<dyn std::error::Error>> {
     println!("Client initialized");
 
     let socket = TcpStream::connect(ip_addr.clone()).await?;
@@ -16,7 +15,7 @@ pub async fn client(ip_addr: String) -> std::io::Result<()> {
 }
 
 
-pub async fn server(port: String) -> std::io::Result<()> {
+pub async fn server(port: String) -> Result<(), Box<dyn std::error::Error>> {
     println!("Server initialized");
 
     let listener = TcpListener::bind(format!("127.0.0.1:{}", port.clone())).await?;
@@ -27,6 +26,4 @@ pub async fn server(port: String) -> std::io::Result<()> {
         main_control::start_chat_service(socket).await?;
         println!("Chat service ended");
     }
-
-    Ok(())
 }
