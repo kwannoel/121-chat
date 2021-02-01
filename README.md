@@ -22,12 +22,12 @@ Requirements:
 
 - Start server
 ``` sh
-MODE=server PORT=<port> cargo run
+RUST_LOG=info MODE=server cargo run
 ```
 
 - Start client
 ``` sh
-MODE=client IP_ADDR=<ip_addr> cargo run
+RUST_LOG=info MODE=client IP_ADDR=127.0.0.1 cargo run
 ```
 
 - Chatting
