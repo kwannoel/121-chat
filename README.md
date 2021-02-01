@@ -42,8 +42,9 @@ We maintain 3 threads throughout application lifetime, which communicate via `mp
 
 These are `receiver`, `sender` and `input`. 
 
-The `receiver` thread listens to `TCPStream`, notifies main event loop via `Event` messsages.
-Likewise, `input` thread listens to `TCPStream`, notifies main event loop via `Event` messages.
+The `receiver` thread listens to `TCPStream`, notifies main event loop via `Event` messsages, on incoming messages.
+
+Likewise, `input` thread listens to `Stdin`, notifies main event loop via `Event` messages, on user input.
 
 The `sender` thread is where `send` message jobs get dispatched to, from `main_control`.
 
