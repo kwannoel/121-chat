@@ -28,7 +28,7 @@ After connection is established, users on either side (server and client) can se
 
     1. Type your message
     2. press `ENTER`
-    3. send `EOF` to terminal with `^D`
+    3. send `EOF` to terminal with `^D`, (In Linux this is `Ctrl-D`).
 
     The text will then be forwarded to the other chat client.
 
