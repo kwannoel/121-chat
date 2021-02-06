@@ -42,6 +42,8 @@ Client and Server can share the same chat protocol, and utilize their own connec
 
 ## Architecture
 
+![Architecture](./static/architecture.md)
+
 We try to follow a message passing style, with `main_control` receiving event messages and handling them accordingly.
 
 We maintain 3 threads throughout application lifetime, which communicate via `mpsc`s.
